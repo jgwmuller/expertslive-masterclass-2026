@@ -1,0 +1,63 @@
+<!--
+  ============================================================================
+   POLICY 1 of 4 — Token-based rate limiting (azure-openai-token-limit)
+  ============================================================================
+   The point: classic rate-limit counts REQUESTS. LLM cost and capacity are
+   measured in TOKENS, not requests — one fat prompt can cost more than a
+   hundred small ones. azure-openai-token-limit reads the token usage the
+   OpenAI backend reports and enforces a tokens-per-minute ceiling per caller.
+   Over the limit => the caller gets HTTP 429 with a Retry-After.
+
+   We also emit token metrics to App Insights so you can SEE consumption on a
+   chart (azure-openai-emit-token-metric). That makes the cost story concrete:
+   "this is the bill, per subscription, in tokens — and here is the cap."
+
+   counter-key here is the APIM subscription ID, so each consumer gets its own
+   budget. estimate-prompt-tokens="false" means we meter on the ACTUAL usage
+   returned by the model (most accurate); see the policy note about concurrent
+   requests briefly overshooting.
+
+   Demo: set tokens-per-minute low (e.g. 200), fire a couple of chat calls,
+   watch the 3rd return 429 + Retry-After.
+
+   Schema confirmed against Microsoft Learn (azure-openai-token-limit-policy,
+   updated 2025-11-24) and azure-openai-emit-token-metric-policy.
+   VERIFY-IN-TEST: emit-token-metric requires APIM<->Application Insights wiring;
+   if App Insights isn't connected the emit line is a no-op (safe), but the
+   metric won't appear. Connect App Insights to light up the chart.
+  ============================================================================
+-->
+<policies>
+  <inbound>
+    <base />
+    <!-- BASE WIRING (required) — every demo policy must include these two
+         elements, because `az apim api policy create` REPLACES the API-level
+         policy (not layered). Without them, the API has no auth + no backend
+         and every request returns HTTP 500. -->
+    <set-backend-service backend-id="openai-pool" />
+    <authentication-managed-identity resource="https://cognitiveservices.azure.com" />
+    <!-- Meter and cap on tokens per minute, per APIM subscription. -->
+    <azure-openai-token-limit
+        counter-key="@(context.Subscription.Id)"
+        tokens-per-minute="200"
+        estimate-prompt-tokens="false"
+        remaining-tokens-header-name="x-remaining-tokens"
+        tokens-consumed-header-name="x-consumed-tokens"
+        retry-after-header-name="Retry-After" />
+    <!-- Send Total/Prompt/Completion token counts to App Insights as a custom
+         metric, dimensioned by subscription so you can chart cost per consumer. -->
+    <azure-openai-emit-token-metric namespace="AzureOpenAI">
+      <dimension name="Subscription ID" />
+      <dimension name="API ID" />
+    </azure-openai-emit-token-metric>
+  </inbound>
+  <backend>
+    <base />
+  </backend>
+  <outbound>
+    <base />
+  </outbound>
+  <on-error>
+    <base />
+  </on-error>
+</policies>

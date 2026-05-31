@@ -1,0 +1,73 @@
+<!--
+  ============================================================================
+   POLICY 2 of 4 — Semantic caching
+   (azure-openai-semantic-cache-lookup + azure-openai-semantic-cache-store)
+  ============================================================================
+   The point: an EXACT-match response cache almost never hits for chat — users
+   phrase the same question a hundred different ways. Semantic cache embeds the
+   incoming prompt, compares it (cosine similarity) to embeddings of previously
+   answered prompts, and on a close-enough match returns the cached completion
+   WITHOUT calling the model. Result: a paraphrased repeat costs ~0 tokens and
+   returns in single-digit ms instead of a full generation round-trip.
+
+   This is the "measure the cost/latency drop" demo: run a prompt, then run a
+   reworded version of it, and watch the second one come back instantly with
+   zero backend token spend.
+
+   score-threshold is the MAX vector distance to count as a hit (lower = more
+   similar required). 0.05 is tight; loosen toward ~0.2 to see more hits — but
+   note the Learn warning that loose thresholds can surface stale/wrong answers.
+   vary-by partitions the cache per subscription so tenants don't read each
+   other's cached answers.
+
+   Schema confirmed against Microsoft Learn azure-openai-semantic-cache-store-policy
+   (updated 2026-02-24) and the paired lookup policy.
+
+   VERIFY-IN-TEST (three real prerequisites):
+     1. EXTERNAL CACHE: semantic cache needs an external cache wired to APIM
+        (Azure Cache for Redis Enterprise w/ RediSearch). Developer SKU has a
+        built-in cache for plain response-caching, but SEMANTIC cache requires the
+        Redis Enterprise vector index. deploy-apim.sh leaves this OFF by default
+        and prints how to add it — do it before this demo or lookups no-op.
+     2. EMBEDDINGS BACKEND: embeddings-backend-id must point at an APIM backend
+        that fronts a text-embedding-* deployment. We reference
+        "openai-embeddings" — deploy-apim.sh can create an embeddings deployment
+        + backend, OR you point it at an existing one. Confirm the embeddings
+        model is available in your region.
+     3. embeddings-backend-auth="system-assigned" => APIM's managed identity must
+        have "Cognitive Services OpenAI User" on the embeddings account.
+  ============================================================================
+-->
+<policies>
+  <inbound>
+    <base />
+    <!-- BASE WIRING (required) — every demo policy must include these two
+         elements, because `az apim api policy create` REPLACES the API-level
+         policy (not layered). Without them, the API has no auth + no backend
+         and every request returns HTTP 500. -->
+    <set-backend-service backend-id="openai-pool" />
+    <authentication-managed-identity resource="https://cognitiveservices.azure.com" />
+    <!-- Try to answer from the semantic cache before touching the model. -->
+    <azure-openai-semantic-cache-lookup
+        score-threshold="0.05"
+        embeddings-backend-id="openai-embeddings"
+        embeddings-backend-auth="system-assigned">
+      <vary-by>@(context.Subscription.Id)</vary-by>
+    </azure-openai-semantic-cache-lookup>
+    <!-- Microsoft's recommended guard: cap calls right after the cache lookup so
+         a cache outage can't stampede the backend. -->
+    <rate-limit calls="20" renewal-period="60" />
+  </inbound>
+  <backend>
+    <base />
+  </backend>
+  <outbound>
+    <!-- Store the freshly generated completion for future semantically-similar
+         prompts. TTL 120s keeps the demo cache short-lived and obvious. -->
+    <azure-openai-semantic-cache-store duration="120" />
+    <base />
+  </outbound>
+  <on-error>
+    <base />
+  </on-error>
+</policies>

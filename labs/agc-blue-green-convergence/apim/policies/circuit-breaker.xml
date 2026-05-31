@@ -1,0 +1,74 @@
+<!--
+  ============================================================================
+   POLICY 4 of 4 — Backend circuit breaker reacting to 429 + Retry-After
+  ============================================================================
+   The point: when an OpenAI backend says "429 Too Many Requests" it usually
+   sends a Retry-After telling you how long it's saturated. A naive gateway
+   keeps hammering it and keeps getting 429s. A circuit breaker OPENS after a
+   few 429s, stops sending to that backend for a cooldown, and (because the pool
+   has a second backend) traffic keeps flowing through the healthy one.
+
+   IMPORTANT: the circuit breaker itself is defined on the BACKEND resource in
+   main.bicep (backendPrimary/backendSecondary -> circuitBreaker.rules), because
+   that is where APIM evaluates it. THIS XML is the API-level policy half: route
+   at the pool, and turn an upstream 429 into a clean, client-friendly response
+   that echoes Retry-After instead of leaking a raw backend error.
+
+   Demo (the reveal): with load-balance applied, FAIL one backend — the cleanest
+   way is to drive its deployment over its TPM so it returns 429 (or, bluntly,
+   delete/disable one deployment). Watch APIM trip that backend's breaker and
+   serve 100% from the survivor with no client-visible failures — the AI-gateway
+   echo of the AGC blue/green zero-drop reveal you just did on AKS.
+
+   Backend circuitBreaker schema (count / interval / statusCodeRanges /
+   tripDuration / acceptRetryAfter) confirmed via Microsoft Learn "API Management
+   backends" + the OpenAI-at-scale circuit-breaker guidance.
+
+   VERIFY-IN-TEST:
+     - The backend circuitBreaker block requires a recent API version; if the
+       2024-05-01 resource in main.bicep rejected it, the breaker won't be armed
+       and this policy alone won't trip anything. Confirm the breaker is present:
+         az apim backend show ... (query: properties.circuitBreaker)
+     - acceptRetryAfter=true (set in Bicep) makes APIM honour the OpenAI
+       Retry-After when deciding when to re-close. Confirm the 429 responses
+       actually carry Retry-After in your region.
+  ============================================================================
+-->
+<policies>
+  <inbound>
+    <base />
+    <!-- BASE WIRING — `set-backend-service` was already here. We also need
+         `authentication-managed-identity` because `az apim api policy create`
+         REPLACES the API-level policy, so any auth from a previously-applied
+         policy is gone. Without this line every call returns HTTP 500. -->
+    <!-- Same pool as load-balance.xml; the pool members carry the breakers. -->
+    <set-backend-service backend-id="openai-pool" />
+    <authentication-managed-identity resource="https://cognitiveservices.azure.com" />
+  </inbound>
+  <backend>
+    <base />
+  </backend>
+  <outbound>
+    <base />
+  </outbound>
+  <on-error>
+    <base />
+    <!-- If every pooled backend is open/throttled, return a tidy 429 to the
+         client and surface a Retry-After so well-behaved clients back off,
+         instead of leaking the raw upstream error. -->
+    <choose>
+      <when condition="@(context.Response != null &amp;&amp; context.Response.StatusCode == 429)">
+        <return-response>
+          <set-status code="429" reason="Too Many Requests" />
+          <set-header name="Retry-After" exists-action="override">
+            <value>@{
+              var ra = context.Response.Headers.GetValueOrDefault("Retry-After", "");
+              return string.IsNullOrEmpty(ra) ? "30" : ra;
+            }</value>
+          </set-header>
+          <set-body>{"error":"All AI backends are throttled. Retry after the Retry-After interval."}</set-body>
+        </return-response>
+      </when>
+    </choose>
+  </on-error>
+</policies>

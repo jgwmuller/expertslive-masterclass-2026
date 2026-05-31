@@ -1,0 +1,45 @@
+#cloud-config
+# ============================================================================
+#  Jump VM bootstrap — the "from inside the VNet" workstation.
+#  Installs DNS tools, Azure CLI, and a tiny Python venv with the Foundry/agents
+#  SDK so an attendee can:
+#    - nslookup the private FQDNs (must resolve to 192.168.1.x)
+#    - `az login` (with managed identity or device code) and reach the project
+#    - run an agent end-to-end, entirely inside the private network
+# ============================================================================
+package_update: true
+packages:
+  - dnsutils        # nslookup, dig
+  - curl
+  - jq
+  - python3-venv
+  - python3-pip
+
+write_files:
+  # Readable copy of the DNS reveal so attendees can re-run it on stage.
+  - path: /usr/local/bin/check-private-dns.sh
+    permissions: '0755'
+    content: |
+      #!/usr/bin/env bash
+      # Usage: check-private-dns.sh <foundry-cognitive-fqdn> <foundry-openai-fqdn> <search-fqdn> <blob-fqdn> <cosmos-fqdn>
+      # From INSIDE the VNet every name should resolve to a 192.168.1.x private IP.
+      set -u
+      for fqdn in "$@"; do
+        echo "=============================================================="
+        echo "nslookup $fqdn"
+        nslookup "$fqdn" || true
+      done
+      echo "=============================================================="
+      echo "Expected: every name resolves to a PRIVATE 192.168.1.x address."
+      echo "If a name NXDOMAINs or returns a public IP, its private endpoint or"
+      echo "DNS zone link is missing — that is the lab's 'missing PE' failure mode."
+
+runcmd:
+  # Azure CLI (Microsoft's install script).
+  - curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+  # Python venv with the Foundry/agents SDK for the end-to-end agent run.
+  # VERIFY-IN-TEST: package names track the Foundry SDK rename cadence; confirm
+  # 'azure-ai-projects' / 'azure-ai-agents' against current docs at deploy time.
+  - python3 -m venv /opt/agentvenv
+  - /opt/agentvenv/bin/pip install --upgrade pip
+  - /opt/agentvenv/bin/pip install azure-identity azure-ai-projects azure-ai-agents || true

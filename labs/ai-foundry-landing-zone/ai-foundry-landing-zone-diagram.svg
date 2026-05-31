@@ -1,0 +1,131 @@
+<svg viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#0078D4"/>
+    </marker>
+    <marker id="arrGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#107C10"/>
+    </marker>
+    <marker id="arrRed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#C4314B"/>
+    </marker>
+    <marker id="arrGray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8A8886"/>
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="640" y="38" text-anchor="middle" font-size="28" font-weight="700" fill="#201F1E">A private AI Foundry landing zone</text>
+  <text x="640" y="68" text-anchor="middle" font-size="15" fill="#605E5C">Hub-and-spoke, no public egress — the agent runs end-to-end without leaving the VNet</text>
+
+  <!-- ================= HUB band ================= -->
+  <rect x="32" y="92" width="470" height="470" rx="14" fill="#EAF3FB" stroke="#0078D4" stroke-width="2"/>
+  <text x="52" y="118" font-size="15" font-weight="700" fill="#0078D4">HUB vnet · platform / connectivity · 10.10.0.0/16</text>
+
+  <!-- AzureFirewallSubnet -->
+  <rect x="52" y="132" width="430" height="96" rx="8" fill="#FFF4CE" stroke="#D9B100" stroke-width="1.4"/>
+  <text x="66" y="152" font-size="11.5" fill="#7A5C00">AzureFirewallSubnet  10.10.0.0/26</text>
+  <rect x="70" y="162" width="240" height="56" rx="6" fill="#FFFFFF" stroke="#D9B100" stroke-width="1.6"/>
+  <text x="190" y="184" text-anchor="middle" font-size="14" font-weight="700" fill="#7A5C00">Azure Firewall + Policy</text>
+  <text x="190" y="206" text-anchor="middle" font-size="11" fill="#605E5C">egress allowlist · AAD + ACA FQDNs</text>
+  <text x="392" y="184" text-anchor="middle" font-size="12.5" font-weight="700" fill="#A4262C">NO TLS</text>
+  <text x="392" y="200" text-anchor="middle" font-size="12.5" font-weight="700" fill="#A4262C">INSPECTION</text>
+
+  <!-- AzureBastionSubnet -->
+  <rect x="52" y="244" width="210" height="86" rx="8" fill="#F3F9FD" stroke="#2B88D8" stroke-width="1"/>
+  <text x="66" y="264" font-size="11.5" fill="#605E5C">AzureBastionSubnet 10.10.1.0/26</text>
+  <rect x="70" y="276" width="174" height="42" rx="6" fill="#FFFFFF" stroke="#0078D4" stroke-width="1.4"/>
+  <text x="157" y="302" text-anchor="middle" font-size="13" font-weight="700" fill="#201F1E">Bastion</text>
+
+  <!-- jump subnet -->
+  <rect x="276" y="244" width="206" height="86" rx="8" fill="#F3F9FD" stroke="#2B88D8" stroke-width="1"/>
+  <text x="290" y="264" font-size="11.5" fill="#605E5C">snet-jump 10.10.2.0/24</text>
+  <rect x="294" y="276" width="170" height="42" rx="6" fill="#FFFFFF" stroke="#0078D4" stroke-width="1.4"/>
+  <text x="379" y="294" text-anchor="middle" font-size="13" font-weight="700" fill="#201F1E">vm-jump</text>
+  <text x="379" y="311" text-anchor="middle" font-size="10.5" fill="#605E5C">nslookup · az · agents SDK</text>
+
+  <!-- egress arrow down from firewall -->
+  <path d="M 190 228 L 190 360" fill="none" stroke="#D9B100" stroke-width="2.5" marker-end="url(#arrGray)"/>
+  <rect x="64" y="362" width="392" height="56" rx="8" fill="#FAF9F8" stroke="#D2D0CE" stroke-width="1"/>
+  <text x="260" y="384" text-anchor="middle" font-size="12.5" font-weight="700" fill="#7A5C00">Internet egress — only allowlisted FQDNs leave</text>
+  <text x="260" y="404" text-anchor="middle" font-size="11.5" fill="#605E5C">no public egress for the agent · every FQDN is logged</text>
+
+  <!-- jump reaches into spoke (DNS resolution) -->
+  <text x="60" y="446" font-size="11.5" font-weight="700" fill="#107C10">From the jump box: nslookup → 192.168.1.x (private)</text>
+  <text x="60" y="466" font-size="11.5" fill="#605E5C">Same lookups from outside the VNet → NXDOMAIN / unreachable</text>
+  <rect x="52" y="478" width="430" height="72" rx="8" fill="#EBF6EB" stroke="#107C10" stroke-width="1.2"/>
+  <text x="267" y="500" text-anchor="middle" font-size="12" font-weight="700" fill="#0B5A0B">Private DNS zones (linked to BOTH vnets)</text>
+  <text x="267" y="518" text-anchor="middle" font-size="10" fill="#605E5C">privatelink.cognitiveservices / openai / services.ai.azure.com</text>
+  <text x="267" y="534" text-anchor="middle" font-size="10" fill="#605E5C">privatelink.search.windows.net · documents.azure.com · blob.core.windows.net</text>
+
+  <!-- ================= peering link ================= -->
+  <path d="M 502 320 L 560 320" fill="none" stroke="#0078D4" stroke-width="3" marker-end="url(#arrBlue)" marker-start="url(#arrBlue)"/>
+  <text x="531" y="310" text-anchor="middle" font-size="11" font-weight="700" fill="#0078D4">peering</text>
+
+  <!-- ================= SPOKE band ================= -->
+  <rect x="560" y="92" width="500" height="470" rx="14" fill="#F3F2F1" stroke="#605E5C" stroke-width="2"/>
+  <text x="580" y="118" font-size="15" font-weight="700" fill="#323130">SPOKE vnet · workload · 192.168.0.0/16</text>
+
+  <!-- agent subnet (delegated) -->
+  <rect x="580" y="132" width="460" height="110" rx="8" fill="#EAF3FB" stroke="#0078D4" stroke-width="1.4"/>
+  <text x="594" y="152" font-size="11.5" fill="#0078D4">snet-agent  192.168.0.0/24</text>
+  <rect x="598" y="162" width="424" height="66" rx="6" fill="#FFFFFF" stroke="#0078D4" stroke-width="1.6"/>
+  <text x="810" y="186" text-anchor="middle" font-size="14" font-weight="700" fill="#201F1E">Standard Agent compute (injected)</text>
+  <text x="810" y="208" text-anchor="middle" font-size="11.5" fill="#605E5C">delegated → Microsoft.App/environments · /24 · one per Foundry resource</text>
+
+  <!-- pe subnet -->
+  <rect x="580" y="254" width="460" height="180" rx="8" fill="#EBF6EB" stroke="#107C10" stroke-width="1.4"/>
+  <text x="594" y="274" font-size="11.5" fill="#0B5A0B">snet-pe  192.168.1.0/24  ·  private endpoints (NOT auto-created)</text>
+  <rect x="598" y="286" width="200" height="64" rx="6" fill="#FFFFFF" stroke="#107C10" stroke-width="1.4"/>
+  <text x="698" y="310" text-anchor="middle" font-size="12.5" font-weight="700" fill="#0B5A0B">pe-foundry</text>
+  <text x="698" y="330" text-anchor="middle" font-size="10.5" fill="#605E5C">groupId: account</text>
+  <rect x="820" y="286" width="200" height="64" rx="6" fill="#FFFFFF" stroke="#107C10" stroke-width="1.4"/>
+  <text x="920" y="310" text-anchor="middle" font-size="12.5" font-weight="700" fill="#0B5A0B">pe-search</text>
+  <text x="920" y="330" text-anchor="middle" font-size="10.5" fill="#605E5C">groupId: searchService</text>
+  <rect x="598" y="360" width="200" height="64" rx="6" fill="#FFFFFF" stroke="#107C10" stroke-width="1.4"/>
+  <text x="698" y="384" text-anchor="middle" font-size="12.5" font-weight="700" fill="#0B5A0B">pe-storage-blob</text>
+  <text x="698" y="404" text-anchor="middle" font-size="10.5" fill="#605E5C">groupId: blob</text>
+  <rect x="820" y="360" width="200" height="64" rx="6" fill="#FFFFFF" stroke="#107C10" stroke-width="1.4"/>
+  <text x="920" y="384" text-anchor="middle" font-size="12.5" font-weight="700" fill="#0B5A0B">pe-cosmos-sql</text>
+  <text x="920" y="404" text-anchor="middle" font-size="10.5" fill="#605E5C">groupId: Sql</text>
+
+  <!-- forced egress UDR note -->
+  <rect x="580" y="446" width="460" height="36" rx="8" fill="#FFF4CE" stroke="#D9B100" stroke-width="1.2"/>
+  <text x="810" y="469" text-anchor="middle" font-size="12" font-weight="600" fill="#7A5C00">rt-spoke-egress · 0.0.0.0/0 → hub Azure Firewall private IP</text>
+
+  <!-- BYO data row -->
+  <text x="810" y="506" text-anchor="middle" font-size="12.5" font-weight="700" fill="#A4262C">BYO data (mandatory · public access Disabled)</text>
+  <rect x="580" y="516" width="146" height="38" rx="6" fill="#FBEAEA" stroke="#C4314B" stroke-width="1.4"/>
+  <text x="653" y="540" text-anchor="middle" font-size="12" font-weight="700" fill="#A4262C">Storage (blob)</text>
+  <rect x="737" y="516" width="146" height="38" rx="6" fill="#FBEAEA" stroke="#C4314B" stroke-width="1.4"/>
+  <text x="810" y="540" text-anchor="middle" font-size="12" font-weight="700" fill="#A4262C">AI Search</text>
+  <rect x="894" y="516" width="146" height="38" rx="6" fill="#FBEAEA" stroke="#C4314B" stroke-width="1.4"/>
+  <text x="967" y="540" text-anchor="middle" font-size="12" font-weight="700" fill="#A4262C">Cosmos DB (Sql)</text>
+
+  <!-- PE -> data connectors -->
+  <path d="M 698 424 L 653 514" fill="none" stroke="#C4314B" stroke-width="1.6" marker-end="url(#arrRed)"/>
+  <path d="M 920 350 C 1000 440, 1000 470, 967 514" fill="none" stroke="#C4314B" stroke-width="1.6" marker-end="url(#arrRed)"/>
+  <path d="M 698 424 C 760 470, 800 490, 810 514" fill="none" stroke="#C4314B" stroke-width="1.6" marker-end="url(#arrRed)"/>
+
+  <!-- agent -> PE (data plane stays private) -->
+  <path d="M 810 228 L 810 254" fill="none" stroke="#107C10" stroke-width="2.5" marker-end="url(#arrGreen)"/>
+
+  <!-- ================= Foundry account (control plane) ================= -->
+  <rect x="1078" y="170" width="172" height="120" rx="10" fill="#FFFFFF" stroke="#5C2D91" stroke-width="2"/>
+  <text x="1164" y="200" text-anchor="middle" font-size="14" font-weight="700" fill="#5C2D91">Foundry</text>
+  <text x="1164" y="220" text-anchor="middle" font-size="11.5" fill="#605E5C">account + project</text>
+  <text x="1164" y="240" text-anchor="middle" font-size="11.5" fill="#605E5C">gpt-4o deployment</text>
+  <text x="1164" y="262" text-anchor="middle" font-size="11" fill="#605E5C">capability host</text>
+  <text x="1164" y="280" text-anchor="middle" font-size="10.5" font-weight="700" fill="#A4262C">public access: Disabled</text>
+  <path d="M 1078 250 C 1050 250, 1030 300, 1022 314" fill="none" stroke="#5C2D91" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arrGray)"/>
+  <text x="1110" y="306" text-anchor="middle" font-size="9.5" font-style="italic" fill="#5C2D91">PE: account</text>
+
+  <!-- ================= Legend ================= -->
+  <rect x="32" y="576" width="1218" height="118" rx="10" fill="#FAF9F8" stroke="#D2D0CE" stroke-width="1"/>
+  <line x1="56" y1="600" x2="96" y2="600" stroke="#107C10" stroke-width="3"/>
+  <text x="108" y="605" font-size="12.5" fill="#323130">Agent data-plane traffic stays on private endpoints inside the VNet — no public hairpin. PE region ≠ latency (Lab 1 callback).</text>
+  <line x1="56" y1="626" x2="96" y2="626" stroke="#D9B100" stroke-width="3"/>
+  <text x="108" y="631" font-size="12.5" fill="#323130">Egress: spoke UDR forces 0.0.0.0/0 to the hub firewall; allowlist only (AAD + Container Apps FQDNs); NO TLS inspection (breaks auth).</text>
+  <text x="56" y="660" font-size="13" font-weight="700" fill="#A4262C">PEs to Search / Storage / Cosmos are NOT auto-created — you create them, or DNS resolves but the agent can't reach its data.</text>
+  <text x="56" y="682" font-size="12" font-weight="700" fill="#5C2D91">Teardown: delete + PURGE Foundry BEFORE the VNet — the Microsoft.App/environments service-association-link blocks VNet deletion.</text>
+</svg>

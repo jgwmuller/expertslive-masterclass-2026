@@ -1,0 +1,30 @@
+# ----------------------------------------------------------------------------
+# HTTPRoute — weighted blue/green, the heart of the demo.
+#
+# weight 999 : weight 1  means ~99.9% of traffic hits BLUE (backend-v1) and a
+# trickle keeps GREEN (backend-v2) warm as a hot standby.
+#
+# The reveal: with the hammer running, scale backend-v1 to zero. AGC notices the
+# endpoints disappear and reconverges to GREEN in UNDER A SECOND — with ZERO
+# dropped HTTP requests. (Classic AGIC + App Gateway v2 took 30-60s and dropped
+# requests on a rollout; AGC sends straight to pod IPs and reprograms instantly.)
+#
+# Weighted backendRefs are a native Gateway API feature here — no canary
+# controller, no service mesh required for north-south traffic shifting.
+# ----------------------------------------------------------------------------
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: blue-green-route
+  namespace: test-infra
+spec:
+  parentRefs:
+    - name: gateway-01
+  rules:
+    - backendRefs:
+        - name: backend-v1   # BLUE  — active
+          port: 80
+          weight: 999
+        - name: backend-v2   # GREEN — standby
+          port: 80
+          weight: 1

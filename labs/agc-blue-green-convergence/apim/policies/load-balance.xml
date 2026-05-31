@@ -1,0 +1,64 @@
+<!--
+  ============================================================================
+   POLICY 3 of 4 — Weighted load-balancing across two OpenAI backends
+  ============================================================================
+   The point: one Azure OpenAI deployment has finite TPM. Put two (here: two
+   accounts in two regions) behind APIM and spread load across them. The clean
+   way in current APIM is a load-balanced POOL backend (created in main.bicep as
+   "openai-pool" with weight 50/50). This policy simply routes the API at the
+   pool; APIM does the weighting + health-aware distribution for you.
+
+   This is Pattern 2 / Pattern 3 from KB 06: weighted load-balancing across
+   regional PAYG deployments (and the same shape you'd use for global-PTU +
+   regional-PAYG fallback).
+
+   Pair this with circuit-breaker.xml: the per-backend circuit breaker (in
+   main.bicep) reacts to 429 by taking a throttled backend out of rotation, so
+   the pool degrades to the healthy backend with no client errors.
+
+   We also re-emit token metrics, dimensioned by Backend ID, so the App Insights
+   chart shows the split actually moving between the two backends.
+
+   VERIFY-IN-TEST:
+     - set-backend-service backend-id MUST equal the pool backend name from
+       main.bicep ("openai-pool"). If you renamed it, change it here.
+     - The Pool backend type + weighted distribution arrived via preview API
+       versions; confirm the pool exists and shows both members after deploy
+       (az apim ... backend show). If the pool didn't take, fall back to a manual
+       round-robin in policy (choose on @(context) + set-backend-service to the
+       individual backends) — kept out here to keep the teaching example clean.
+  ============================================================================
+-->
+<policies>
+  <inbound>
+    <base />
+    <!-- BASE WIRING — `set-backend-service` was already here. We also need
+         `authentication-managed-identity` because `az apim api policy create`
+         REPLACES the API-level policy, so any auth from a previously-applied
+         policy is gone. Without this line every call returns HTTP 500. -->
+    <!-- Route every call at the load-balanced pool; APIM weights + health-checks
+         across openai-primary and openai-secondary. -->
+    <set-backend-service backend-id="openai-pool" />
+    <authentication-managed-identity resource="https://cognitiveservices.azure.com" />
+    <!-- Show which backend served each request, for the live split chart. -->
+    <azure-openai-emit-token-metric namespace="AzureOpenAI">
+      <dimension name="Backend ID" />
+      <dimension name="Subscription ID" />
+    </azure-openai-emit-token-metric>
+  </inbound>
+  <backend>
+    <!-- Forward the request to the pool-selected backend with APIM's retry on the
+         transient 429/5xx so a single throttled hit reroutes within the pool
+         instead of surfacing to the client. -->
+    <retry condition="@(context.Response.StatusCode == 429 || context.Response.StatusCode >= 500)"
+           count="2" interval="0" first-fast-retry="true">
+      <forward-request buffer-request-body="true" />
+    </retry>
+  </backend>
+  <outbound>
+    <base />
+  </outbound>
+  <on-error>
+    <base />
+  </on-error>
+</policies>

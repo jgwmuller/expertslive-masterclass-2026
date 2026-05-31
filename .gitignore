@@ -1,0 +1,20 @@
+# macOS clutter
+.DS_Store
+**/.DS_Store
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+
+# Bicep build artifacts (regenerated from .bicep on demand)
+**/main.json
+**/*.bicep.json
+
+# Lab runtime artifacts (deploy.sh logs, SSH keys, etc.)
+*.log
+**/id_rsa
+**/id_rsa.pub
+
+# Local
+_local/

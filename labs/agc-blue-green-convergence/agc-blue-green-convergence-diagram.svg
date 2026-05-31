@@ -1,0 +1,121 @@
+<svg viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#0078D4"/>
+    </marker>
+    <marker id="arrGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#107C10"/>
+    </marker>
+    <marker id="arrRed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#C4314B"/>
+    </marker>
+    <marker id="arrGray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8A8886"/>
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="640" y="40" text-anchor="middle" font-size="29" font-weight="700" fill="#201F1E">AGC reconverges in under a second</text>
+  <text x="640" y="71" text-anchor="middle" font-size="16" fill="#605E5C">Kill the active backend live — traffic swings to the standby with zero dropped requests</text>
+
+  <!-- ============== DATA PLANE BAND ============== -->
+  <rect x="40" y="95" width="1200" height="315" rx="14" fill="#EAF3FB" stroke="#0078D4" stroke-width="2"/>
+  <text x="60" y="120" font-size="15" font-weight="700" fill="#0078D4">DATA PLANE · the request path (AGC sends straight to POD IPs)</text>
+
+  <!-- client / hammer -->
+  <rect x="66" y="210" width="158" height="92" rx="9" fill="#FFFFFF" stroke="#605E5C" stroke-width="1.6"/>
+  <text x="145" y="246" text-anchor="middle" font-size="15" font-weight="700" fill="#201F1E">client</text>
+  <text x="145" y="268" text-anchor="middle" font-size="12.5" fill="#605E5C">hammer.sh</text>
+  <text x="145" y="287" text-anchor="middle" font-size="11.5" fill="#605E5C">~10 req/s</text>
+
+  <!-- public frontend pill -->
+  <rect x="250" y="232" width="150" height="48" rx="24" fill="#FFF4CE" stroke="#D9B100" stroke-width="1.3"/>
+  <text x="325" y="252" text-anchor="middle" font-size="12.5" font-weight="700" fill="#7A5C00">public frontend</text>
+  <text x="325" y="270" text-anchor="middle" font-size="11.5" fill="#7A5C00">*.alb.azure.com</text>
+
+  <!-- AGC data plane -->
+  <rect x="430" y="198" width="215" height="116" rx="10" fill="#FFFFFF" stroke="#0078D4" stroke-width="2"/>
+  <text x="537" y="228" text-anchor="middle" font-size="15" font-weight="700" fill="#004578">Azure AGC data plane</text>
+  <text x="537" y="250" text-anchor="middle" font-size="12" fill="#605E5C">managed · 2+ instances</text>
+  <text x="537" y="269" text-anchor="middle" font-size="12" fill="#605E5C">in a delegated subnet</text>
+  <text x="537" y="294" text-anchor="middle" font-size="12.5" font-weight="700" fill="#0078D4">→ load-balances POD IPs</text>
+
+  <!-- AKS pods sub-box -->
+  <rect x="700" y="138" width="510" height="250" rx="10" fill="#FFFFFF" stroke="#0078D4" stroke-width="1.3" stroke-dasharray="5,3"/>
+  <text x="718" y="160" font-size="13" font-weight="600" fill="#323130">AKS pods · Azure CNI Overlay (pods reached unencapsulated)</text>
+
+  <!-- BLUE backend (active) -->
+  <rect x="730" y="180" width="280" height="86" rx="8" fill="#DEECF9" stroke="#0078D4" stroke-width="2"/>
+  <text x="750" y="208" font-size="15" font-weight="700" fill="#004578">backend-v1</text>
+  <text x="750" y="230" font-size="12.5" fill="#605E5C">BLUE · weight 999</text>
+  <text x="750" y="250" font-size="12.5" font-weight="700" fill="#004578">ACTIVE</text>
+  <!-- kill badge -->
+  <g>
+    <rect x="888" y="196" width="104" height="54" rx="8" fill="#FBEAEA" stroke="#C4314B" stroke-width="2"/>
+    <text x="940" y="218" text-anchor="middle" font-size="13" font-weight="700" fill="#A4262C">✗ killed</text>
+    <text x="940" y="238" text-anchor="middle" font-size="11.5" fill="#A4262C">replicas → 0</text>
+  </g>
+
+  <!-- GREEN backend (standby) -->
+  <rect x="730" y="288" width="280" height="86" rx="8" fill="#DFF6DD" stroke="#107C10" stroke-width="2"/>
+  <text x="750" y="316" font-size="15" font-weight="700" fill="#0B5A0B">backend-v2</text>
+  <text x="750" y="338" font-size="12.5" fill="#605E5C">GREEN · weight 1 (standby)</text>
+  <text x="750" y="358" font-size="12.5" font-weight="700" fill="#107C10">takes 100% in &lt; 1 s</text>
+
+  <!-- request arrows -->
+  <path d="M 224 256 L 246 256" fill="none" stroke="#0078D4" stroke-width="2.5" marker-end="url(#arrBlue)"/>
+  <path d="M 400 256 L 426 256" fill="none" stroke="#0078D4" stroke-width="2.5" marker-end="url(#arrBlue)"/>
+  <!-- AGC -> BLUE (thick, weight 999) -->
+  <path d="M 645 232 C 690 215, 700 218, 726 218" fill="none" stroke="#0078D4" stroke-width="7" marker-end="url(#arrBlue)"/>
+  <text x="678" y="200" text-anchor="middle" font-size="12.5" font-weight="700" fill="#0078D4">w=999</text>
+  <!-- AGC -> GREEN (thin, weight 1) -->
+  <path d="M 645 286 C 690 320, 700 324, 726 328" fill="none" stroke="#107C10" stroke-width="2" marker-end="url(#arrGreen)"/>
+  <text x="678" y="345" text-anchor="middle" font-size="12.5" font-weight="700" fill="#107C10">w=1</text>
+  <!-- reveal swing arrow (red) -->
+  <path d="M 650 268 C 690 300, 700 324, 726 330" fill="none" stroke="#C4314B" stroke-width="3" stroke-dasharray="7,4" marker-end="url(#arrRed)"/>
+  <text x="600" y="372" text-anchor="middle" font-size="13" font-weight="700" fill="#C4314B">on kill: AGC reprograms → all traffic to GREEN</text>
+
+  <!-- live tally chip -->
+  <rect x="66" y="330" width="334" height="58" rx="9" fill="#201F1E"/>
+  <text x="82" y="356" font-size="13" font-family="Consolas, monospace" fill="#9BD89B">OK ↑  BLUE froze  GREEN ↑</text>
+  <text x="82" y="378" font-size="14" font-weight="700" font-family="Consolas, monospace" fill="#FFFFFF">FAIL = 0   ← the number that never moves</text>
+
+  <!-- ============== CONTROL PLANE BAND ============== -->
+  <rect x="40" y="430" width="1200" height="205" rx="14" fill="#F3FAF3" stroke="#107C10" stroke-width="2"/>
+  <text x="60" y="455" font-size="15" font-weight="700" fill="#0B5A0B">KUBERNETES CONTROL PLANE · Managed-by-ALB (YAML is the source of truth)</text>
+
+  <!-- ApplicationLoadBalancer -->
+  <rect x="70" y="478" width="300" height="118" rx="9" fill="#FFFFFF" stroke="#107C10" stroke-width="1.6"/>
+  <text x="90" y="506" font-size="14.5" font-weight="700" fill="#0B5A0B">ApplicationLoadBalancer</text>
+  <text x="90" y="528" font-size="12.5" fill="#605E5C">"alb-test"  (ns alb-test-infra)</text>
+  <text x="90" y="550" font-size="12.5" fill="#605E5C">association → delegated subnet</text>
+  <text x="90" y="574" font-size="12.5" font-weight="700" fill="#107C10">controller provisions the Azure AGC</text>
+
+  <!-- Gateway -->
+  <rect x="430" y="478" width="270" height="118" rx="9" fill="#FFFFFF" stroke="#0078D4" stroke-width="1.6"/>
+  <text x="450" y="506" font-size="14.5" font-weight="700" fill="#004578">Gateway "gateway-01"</text>
+  <text x="450" y="528" font-size="12.5" fill="#605E5C">gatewayClass azure-alb-external</text>
+  <text x="450" y="550" font-size="12.5" fill="#605E5C">listener HTTP :80</text>
+  <text x="450" y="574" font-size="12.5" fill="#605E5C">(public frontend only)</text>
+
+  <!-- HTTPRoute -->
+  <rect x="760" y="478" width="450" height="118" rx="9" fill="#FFFFFF" stroke="#605E5C" stroke-width="1.6"/>
+  <text x="780" y="506" font-size="14.5" font-weight="700" fill="#201F1E">HTTPRoute "blue-green-route"</text>
+  <text x="780" y="530" font-size="13" fill="#004578">backendRefs:  backend-v1  <tspan font-weight="700">weight 999</tspan></text>
+  <text x="780" y="552" font-size="13" fill="#0B5A0B">              backend-v2  <tspan font-weight="700">weight 1</tspan></text>
+  <text x="780" y="578" font-size="12.5" font-style="italic" fill="#605E5C">native Gateway API weighting — no mesh, no canary controller</text>
+
+  <!-- control arrows -->
+  <path d="M 370 524 L 426 524" fill="none" stroke="#8A8886" stroke-width="1.8" marker-end="url(#arrGray)"/>
+  <path d="M 700 524 L 756 524" fill="none" stroke="#8A8886" stroke-width="1.8" marker-end="url(#arrGray)"/>
+  <!-- provisions arrow up to data plane -->
+  <path d="M 220 478 C 220 430, 360 420, 460 314" fill="none" stroke="#8A8886" stroke-width="1.8" stroke-dasharray="6,4" marker-end="url(#arrGray)"/>
+  <text x="250" y="455" font-size="11.5" font-style="italic" fill="#605E5C">provisions</text>
+  <!-- programs weights arrow -->
+  <path d="M 985 478 C 985 440, 900 410, 760 300" fill="none" stroke="#8A8886" stroke-width="1.8" stroke-dasharray="6,4" marker-end="url(#arrGray)"/>
+  <text x="1000" y="455" font-size="11.5" font-style="italic" fill="#605E5C">programs weights</text>
+
+  <!-- ============== Bottom punchline ============== -->
+  <text x="640" y="668" text-anchor="middle" font-size="15.5" font-weight="700" fill="#A4262C">AGIC + App Gateway v2 reprogrammed in 30–60 s and dropped requests on every rollout. AGC talks to pod IPs and reconverges sub-second.</text>
+  <text x="640" y="694" text-anchor="middle" font-size="13.5" fill="#605E5C">Blue/green and canary become a weight on an HTTPRoute — not an outage window.</text>
+</svg>

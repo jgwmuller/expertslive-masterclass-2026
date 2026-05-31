@@ -1,0 +1,89 @@
+<svg viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#107C10"/>
+    </marker>
+    <marker id="arrRed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#C4314B"/>
+    </marker>
+    <marker id="arrOrange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#CA5010"/>
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="640" y="40" text-anchor="middle" font-size="29" font-weight="700" fill="#201F1E">Your routes might be lying — and the firewall is a proxy</text>
+  <text x="640" y="72" text-anchor="middle" font-size="16" fill="#605E5C">Parts B &amp; C: a /32 UDR loses to the injected PE route; AzFW app rules terminate TLS and do their own DNS</text>
+
+  <!-- ================= HUB band ================= -->
+  <rect x="40" y="100" width="440" height="380" rx="14" fill="#FDF1E9" stroke="#CA5010" stroke-width="2"/>
+  <text x="60" y="126" font-size="16" font-weight="700" fill="#CA5010">HUB · vnet-hub 10.30.0.0/16</text>
+
+  <!-- AzureFirewallSubnet -->
+  <rect x="66" y="146" width="388" height="220" rx="10" fill="#FFFFFF" stroke="#CA5010" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text x="84" y="170" font-size="13" fill="#605E5C">AzureFirewallSubnet  10.30.0.0/24</text>
+
+  <rect x="92" y="186" width="336" height="96" rx="8" fill="#FDF1E9" stroke="#CA5010" stroke-width="2"/>
+  <text x="260" y="216" text-anchor="middle" font-size="16" font-weight="700" fill="#8E3A0B">azfw-pelab</text>
+  <text x="260" y="240" text-anchor="middle" font-size="12" fill="#605E5C">Azure Firewall (multi-instance)</text>
+  <text x="260" y="264" text-anchor="middle" font-size="12.5" font-weight="700" fill="#CA5010">instances 10.30.0.x / 10.30.0.y</text>
+
+  <rect x="92" y="296" width="336" height="54" rx="8" fill="#FFF4CE" stroke="#D9B100" stroke-width="1.2"/>
+  <text x="260" y="318" text-anchor="middle" font-size="12.5" font-weight="600" fill="#7A5C00">firewall policy · app rule: allow blob FQDN</text>
+  <text x="260" y="338" text-anchor="middle" font-size="11.5" fill="#7A5C00">proxies on SNI · does its OWN DNS lookup</text>
+
+  <!-- ================= SPOKE band ================= -->
+  <rect x="560" y="100" width="440" height="380" rx="14" fill="#EAF3FB" stroke="#0078D4" stroke-width="2"/>
+  <text x="580" y="126" font-size="16" font-weight="700" fill="#0078D4">SPOKE · vnet-pelab 10.20.0.0/16</text>
+
+  <!-- client subnet -->
+  <rect x="586" y="146" width="388" height="104" rx="8" fill="#F3F9FD" stroke="#2B88D8" stroke-width="1"/>
+  <text x="604" y="168" font-size="12" fill="#605E5C">snet-client 10.20.1.0/24  ·  rt-client-to-fw</text>
+  <rect x="612" y="180" width="220" height="58" rx="6" fill="#FFFFFF" stroke="#0078D4" stroke-width="1.5"/>
+  <text x="722" y="206" text-anchor="middle" font-size="15" font-weight="700" fill="#201F1E">vm-client</text>
+  <text x="722" y="227" text-anchor="middle" font-size="11.5" fill="#605E5C">Ubuntu + mtr / traceroute</text>
+
+  <!-- pe subnet -->
+  <rect x="586" y="266" width="388" height="196" rx="8" fill="#F3F9FD" stroke="#2B88D8" stroke-width="1"/>
+  <text x="604" y="288" font-size="12" fill="#605E5C">snet-pe 10.20.2.0/24  ·  ple-network-policies = RouteTableEnabled</text>
+  <rect x="612" y="300" width="332" height="68" rx="6" fill="#EBF6EB" stroke="#107C10" stroke-width="1.5"/>
+  <text x="628" y="326" font-size="13.5" font-weight="700" fill="#0B5A0B">pe-near-blob  10.20.2.4</text>
+  <text x="628" y="348" font-size="11.5" fill="#605E5C">injected /32  next-hop InterfaceEndpoint</text>
+  <rect x="612" y="380" width="332" height="68" rx="6" fill="#FBEAEA" stroke="#C4314B" stroke-width="1.5"/>
+  <text x="628" y="406" font-size="13.5" font-weight="700" fill="#A4262C">pe-far-blob  10.20.2.5</text>
+  <text x="628" y="428" font-size="11.5" fill="#605E5C">injected /32  next-hop InterfaceEndpoint</text>
+
+  <!-- peering link between hub and spoke -->
+  <line x1="480" y1="240" x2="560" y2="240" stroke="#605E5C" stroke-width="2"/>
+  <text x="520" y="232" text-anchor="middle" font-size="11" fill="#605E5C">peering</text>
+
+  <!-- ================= The route LIE (red, Part B) ================= -->
+  <!-- /32 UDR points at firewall but injected /32 wins -->
+  <path d="M 720 238 C 660 250, 560 300, 612 330" fill="none" stroke="#C4314B" stroke-width="3" marker-end="url(#arrRed)"/>
+  <text x="560" y="300" text-anchor="middle" font-size="12.5" font-weight="700" fill="#C4314B">B: /32 UDR ignored →</text>
+  <text x="560" y="316" text-anchor="middle" font-size="11.5" fill="#C4314B">traffic still lands on the PE</text>
+
+  <!-- ================= The fix path (green, Part B step 3) ================= -->
+  <path d="M 700 250 C 540 380, 360 360, 296 282" fill="none" stroke="#107C10" stroke-width="3" marker-end="url(#arrGreen)"/>
+  <text x="430" y="470" text-anchor="middle" font-size="12.5" font-weight="700" fill="#107C10">B-fix: RouteTableEnabled + summary /24 UDR → firewall is hop 1</text>
+
+  <!-- ================= Part C proxy path (orange) ================= -->
+  <path d="M 260 186 C 260 150, 360 150, 612 414" fill="none" stroke="#CA5010" stroke-width="3" stroke-dasharray="2,3" marker-end="url(#arrOrange)"/>
+  <text x="430" y="120" text-anchor="middle" font-size="12.5" font-weight="700" fill="#CA5010">C: AzFW terminates TLS, reads SNI, re-resolves via linked DNS → new TCP onward</text>
+
+  <!-- ================= Legend ================= -->
+  <rect x="40" y="500" width="1200" height="196" rx="10" fill="#FAF9F8" stroke="#D2D0CE" stroke-width="1"/>
+
+  <line x1="64" y1="528" x2="104" y2="528" stroke="#C4314B" stroke-width="3"/>
+  <text x="116" y="533" font-size="13.5" fill="#323130"><tspan font-weight="700">Part B — the lie:</tspan> an exact /32 UDR → firewall can be SILENTLY beaten by the PE's injected /32 (next-hop InterfaceEndpoint). The route table swears the firewall is next-hop; traceroute still hits the PE.</text>
+
+  <line x1="64" y1="558" x2="104" y2="558" stroke="#107C10" stroke-width="3"/>
+  <text x="116" y="563" font-size="13.5" fill="#323130"><tspan font-weight="700">Part B — the fix:</tspan> enable <tspan font-family="Consolas, monospace">--ple-network-policies RouteTableEnabled</tspan> on snet-pe, then ONE summary /24 UDR → firewall. Now AzFW instances (10.30.0.x/.y) are traceroute hop 1.</text>
+
+  <line x1="64" y1="588" x2="104" y2="588" stroke="#CA5010" stroke-width="3" stroke-dasharray="2,3"/>
+  <text x="116" y="593" font-size="13.5" fill="#323130"><tspan font-weight="700">Part C — the proxy:</tspan> an AzFW APPLICATION rule terminates TLS, reads the SNI, and does its OWN DNS lookup — so the privatelink.blob zone MUST be linked to the hub VNet, or AzFW resolves the public IP and bypasses the PE.</text>
+
+  <text x="64" y="630" font-size="14" font-weight="700" fill="#CA5010">The "impossible" mtr: the far-region blob answers in ~5 ms THROUGH the firewall — because AzFW is the real TCP endpoint, not Germany. Destination IP is irrelevant; SNI is everything.</text>
+
+  <text x="64" y="664" font-size="13.5" fill="#605E5C">Troubleshooting order: (1) what /32 was injected?  (2) what next-hop did it get?  (3) who's proxying?  ·  Note: no VPN gateway here — see VERIFY-IN-TEST in part-b-routes.sh.</text>
+</svg>

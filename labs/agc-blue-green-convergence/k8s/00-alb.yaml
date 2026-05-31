@@ -1,0 +1,26 @@
+# ----------------------------------------------------------------------------
+# Application Gateway for Containers — MANAGED-BY-ALB deployment.
+#
+# When this ApplicationLoadBalancer custom resource is created, the in-cluster
+# ALB controller calls ARM and provisions the actual Azure AGC resource
+# (Microsoft.ServiceNetworking/trafficControllers) plus its association into the
+# delegated subnet. No Bicep/CLI creates the AGC — Kubernetes is the source of
+# truth. The controller names the Azure resources alb-<random> / as-<random>.
+#
+# ${ALB_SUBNET_ID} is substituted by deploy.sh (envsubst) — it is the resource
+# ID of the `subnet-alb` subnet that deploy.sh added to the AKS-managed VNet and
+# delegated to Microsoft.ServiceNetworking/trafficControllers.
+# ----------------------------------------------------------------------------
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: alb-test-infra
+---
+apiVersion: alb.networking.azure.io/v1
+kind: ApplicationLoadBalancer
+metadata:
+  name: alb-test
+  namespace: alb-test-infra
+spec:
+  associations:
+    - ${ALB_SUBNET_ID}
