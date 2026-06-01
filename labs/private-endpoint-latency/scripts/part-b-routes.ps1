@@ -93,7 +93,7 @@ $PeIps = @(Invoke-AzOut network private-endpoint list -g $Rg --query "[].customD
     Where-Object { $_ } | Sort-Object -Unique)
 if ($PeIps.Count -eq 0) {
   # Fallback: read from the PE NICs directly.
-  $PeIps = @(Invoke-AzOut network nic list -g $Rg --query "[?contains(name,'pe-')].ipConfigurations[].privateIPAddress" -o tsv |
+  $PeIps = @(Invoke-AzOut network nic list -g $Rg --query "[?contains(name, 'pe-')].ipConfigurations[].privateIPAddress" -o tsv |
       Where-Object { $_ } | Sort-Object -Unique)
 }
 $peIpsDisplay = if ($PeIps.Count) { $PeIps -join ' ' } else { '<none found>' }
